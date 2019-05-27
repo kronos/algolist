@@ -2,17 +2,10 @@
 // Created by Ivan Samsonov on 2019-05-26.
 //
 
-#include <iostream>
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
-#include "common.hpp"
-#include "disjoint_set.hpp"
-#include "matrix.hpp"
-#include "fast_power.hpp"
-#include "fibonacci.hpp"
-
-int main() {
-    for (int i = 1; i <= 20; i++) {
-        std::cout << fast_fibonacci<ll>(i) << ", ";
-    }
-    return 0;
+int main(int argc, char** argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

@@ -9,35 +9,29 @@
 
 // Disjoint sets (https://en.wikipedia.org/wiki/Disjoint_sets) implementation
 template <typename T>
-class DisjointSets {
+class DisjointSet {
     std::vector<T> P;
     std::vector<T> R;
 
 public:
-    explicit DisjointSets(size_t size) {
+    explicit DisjointSet(size_t size) {
+        assert(size);
         P.resize(size);
         R.resize(size, 0);
     }
 
     void init(T idx) {
+        assert(idx < P.size());
         P[idx] = idx;
         R[idx] = 0;
     }
 
-    void init_with_value(T idx, T value) {
-        P[idx] = value;
-        R[idx] = 0;
-    }
-
     T parent(T idx) {
+        assert(idx < P.size());
         if (idx != P[idx]) {
             P[idx] = parent(P[idx]);
         }
 
-        return P[idx];
-    }
-
-    T get_parent(T idx) {
         return P[idx];
     }
 
@@ -55,6 +49,10 @@ public:
                 }
             }
         }
+    }
+
+    size_t size() const {
+        return P.size();
     }
 };
 

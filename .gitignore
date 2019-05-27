@@ -1,2 +1,4 @@
+.DS_Store
 cpp/.idea
 cpp/cmake-build-debug/
+lib

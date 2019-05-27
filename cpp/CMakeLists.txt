@@ -3,6 +3,16 @@ project(cpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# my includes
 include_directories("include")
 
-add_executable(cpp main.cpp)
+# my source files
+file(GLOB TEST_SOURCE_FILES "tests/*.cpp")
+set(SOURCE_FILES main.cpp ${TEST_SOURCE_FILES})
+add_executable(cpp ${SOURCE_FILES})
+
+# google test
+add_subdirectory(lib/googletest)
+include_directories(lib/googletest/googletest/include)
+include_directories(lib/googletest/googlemock/include)
+target_link_libraries(cpp gtest gtest_main)
