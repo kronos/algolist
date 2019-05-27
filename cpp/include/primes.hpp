@@ -12,12 +12,10 @@
 template<typename T>
 bool is_prime(T number) {
     assert(number >= 0);
-    bool prime = true;
+    bool prime = number == 2 || (number > 2 && number%2 != 0);
 
-    if (number < 2 || (number > 2 && number%2 == 0)) {
-        prime = false;
-    } else {
-        for (size_t counter = 3; (counter*counter <= number) && prime; counter += 2) {
+    if (prime) {
+        for (T counter = 3; (counter*counter <= number) && prime; counter += 2) {
             prime = number % counter > 0;
         }
     }
@@ -26,43 +24,26 @@ bool is_prime(T number) {
 }
 
 // check first N numbers for simplicity in O(N)
-vector<bool> is_primes(size_t N) {
+template<size_t N>
+std::bitset<N> mark_primes() {
     assert(N);
-    vector<bool> is_prime(N+1, true);
-    is_prime[0] = false;
-    if (N < 2) {
-        is_prime[1] = false;
-    }
-
-    for (size_t number = 2; number <= N; number++) {
-        if (is_prime(number)) {
-            for (int j = i; j <= N; j += i) {
-                result[j] = false;
-            }
-        }
-    }
-
-    return is_prime;
-}
-
-void mark_primes(bitset& is_primes) {
-    assert(is_primes.size());
+    std::bitset<N> is_primes;
     is_primes.set();
-    is_primes.unset(0);
+    is_primes.flip(0);
 
     if (is_primes.size() > 1) {
-        is_primes.unset(1);
+        is_primes.flip(1);
     }
 
     for (size_t number = 2; number < is_primes.size(); number++) {
-        if (is_primes.test(idx)) {
-            for (int j = i; j < is_primes.size(); j += i) {
-                b.unset(j);
+        if (is_primes.test(number)) {
+            for (int idx = number*number; idx < is_primes.size(); idx += number) {
+                is_primes.flip(idx);
             }
         }
     }
 
-    return is_prime;
+    return is_primes;
 }
 
 // check if numbers are coprime
