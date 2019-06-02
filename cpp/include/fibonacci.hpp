@@ -5,18 +5,17 @@
 #ifndef FIBONACCI_HPP
 #define FIBONACCI_HPP
 
+#include "common.hpp"
+
 template <typename T>
 T fast_fibonacci(size_t N) {
-    T zero = T();
-    T one = zero + 1;
-
     if (!N) {
-        return zero;
-    } else if (N < 2) {
-        return one;
+        return zero<T>();
+    } else if (N <= 2) {
+        return one<T>();
     }
 
-    Matrix<T> m({{one, one}, {one, zero}});
+    Matrix<T> m({{one<T>(), one<T>()}, {one<T>(), zero<T>()}});
 
     return m.power(N - 1)[0][1];
 }

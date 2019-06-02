@@ -6,6 +6,7 @@
 #define PRIMES_HPP
 
 #include <bitset>
+#include "common.hpp"
 #include "euclid.hpp"
 
 // check if number is prime
@@ -37,7 +38,7 @@ std::bitset<N> mark_primes() {
 
     for (size_t number = 2; number < is_primes.size(); number++) {
         if (is_primes.test(number)) {
-            for (int idx = number*number; idx < is_primes.size(); idx += number) {
+            for (size_t idx = number*number; idx < is_primes.size(); idx += number) {
                 is_primes.flip(idx);
             }
         }
@@ -49,7 +50,7 @@ std::bitset<N> mark_primes() {
 // check if numbers are coprime
 template<typename T>
 bool is_coprime(T a, T b) {
-    return gcd(a, b) == 1;
+    return gcd(a, b) == one<T>();
 }
 
 #endif // PRIMES_HPP
