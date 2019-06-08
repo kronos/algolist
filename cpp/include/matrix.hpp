@@ -73,11 +73,6 @@ public:
     Matrix power(size_t power) const {
         assert(power);
         Matrix result(*this);
-
-        if (power < 2) {
-            return result;
-        }
-
         return fast_power(result, power);
     }
 };

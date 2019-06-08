@@ -9,6 +9,7 @@
 #include <cassert>
 
 typedef long long ll;
+typedef unsigned long long ull;
 
 template<typename T>
 T zero() {
