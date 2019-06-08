@@ -8,7 +8,8 @@ include_directories("include")
 
 # my source files
 file(GLOB TEST_SOURCE_FILES "tests/*.cpp")
-set(SOURCE_FILES main.cpp ${TEST_SOURCE_FILES})
+file(GLOB MATH_TEST_SOURCE_FILES "tests/math/*.cpp")
+set(SOURCE_FILES main.cpp ${TEST_SOURCE_FILES} ${MATH_TEST_SOURCE_FILES})
 add_executable(cpp ${SOURCE_FILES})
 
 # google test
