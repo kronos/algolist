@@ -12,7 +12,7 @@
 const ll base = 1000*1000*1000;
 
 class Long {
-    std::vector<unsigned> data;
+    std::vector<int> data;
     bool negative;
     size_t len;
 
@@ -21,6 +21,7 @@ class Long {
             len--;
         }
     }
+
 public:
     Long(): Long(0) {
     }
@@ -34,7 +35,7 @@ public:
         do {
             data.push_back(abs(value) % base);
             value /= base;
-        } while (value > 0);
+        } while (value != 0);
 
         len = data.size();
     }
@@ -48,7 +49,7 @@ public:
             ll p = 1;
             for (int i = value.length()-1; i >= negative; i--, p *= 10) {
                 carry += (value[i] - '0')*p;
-                if (carry >= base) {
+                if (p >= base) {
                     data.push_back(carry % base);
                     carry /= base;
                     p /= base;
@@ -68,32 +69,31 @@ public:
         negative = value.negative;
     }
 
-    Long operator- () const {
+    Long operator - () const {
         Long result(*this);
         result.negative = !is_zero() && !result.negative;
         return result;
     }
 
-    Long operator- (const Long& other) const {
+    Long operator - (const Long& other) const {
         Long result(*this);
         result -= other;
         return result;
     }
 
-    Long operator+ (const Long& other) const {
+    Long operator + (const Long& other) const {
         Long result(*this);
         result += other;
         return result;
     }
 
-//    Long operator* (const Long& other) const {
+//    Long operator * (const Long& other) const {
 //        Long result(this);
 //        result *= other;
 //        return result;
 //    }
 //
-//    // TODO
-//    Long operator% (const Long& other) const {
+//    Long operator % (const Long& other) const {
 //        Long q = this/other;
 //        return q - other;
 //    }
@@ -108,49 +108,106 @@ public:
         return is_equal;
     }
 
-    Long& operator+= (const Long& other) {
-        size_t this_idx = 0;
-        size_t other_idx = 0;
+    bool operator < (const Long& other) const {
+        if (negative != other.negative) {
+            return negative;
+        }
+
+        if (len != other.len) {
+            return negative ? len > other.len : len < other.len;
+        }
+
+        for (int i = len-1; i >= 0; i--) {
+            if (data[i] != other.data[i]) {
+                return negative ? data[i] > other.data[i] : data[i] < other.data[i];
+            }
+        }
+
+        return false; // equal
+    }
+
+    bool operator > (const Long& other) const {
+        if (negative != other.negative) {
+            return !negative;
+        }
+
+        if (len != other.len) {
+            return negative ? len < other.len : len > other.len;
+        }
+
+        for (int i = len-1; i >= 0; i--) {
+            if (data[i] != other.data[i]) {
+                return negative ? data[i] < other.data[i] : data[i] > other.data[i];
+            }
+        }
+
+        return false; // equal
+    }
+
+    bool operator <= (const Long& other) const {
+        return !(*this > other);
+    }
+
+    bool operator >= (const Long& other) const {
+        return !(*this < other);
+    }
+
+    Long& operator += (const Long& other) {
+        ll this_sign = 1;
+        ll other_sign = 1;
         ll carry = 0;
-        ll this_sign = negative ? -1 : 1;
-        ll other_sign = other.negative ? -1 : 1;
+
+        if (negative != other.negative) {
+            this_sign = negative ? -1 : 1;
+            other_sign = other.negative ? -1 : 1;
+
+            negative = !negative;
+
+            negative = *this > other;
+
+            if (negative) {
+                this_sign = -this_sign;
+                other_sign = -other_sign;
+            }
+        }
 
         for (size_t i = len; i < other.len; i++) {
             data.push_back(0);
         }
 
-        while (this_idx < len && other_idx < other.len) {
-            carry += data[this_idx]*this_sign + other.data[other_idx]*other_sign;
-            data[this_idx] = abs(carry) % base;
-            negative = carry < 0;
-            carry /= base;
-            this_idx++;
-            other_idx++;
+        len = std::max(len, other.len);
+
+        int idx = 0;
+        for (; idx < other.len; idx++) {
+            carry += this_sign*data[idx] + other_sign*other.data[idx];
+            if (carry < 0) {
+                data[idx] = (carry + base) % base;
+                carry = -1;
+            } else {
+                data[idx] = carry % base;
+                carry = carry >= base;
+            }
         }
 
-        for (; this_idx < len; this_idx++) {
-            carry += this->data[this_idx]*this_sign;
-            this->data[this_idx] = abs(carry) % base;
-            negative = carry < 0;
-            carry /= base;
-        }
-
-        for (; other_idx < other.len; other_idx++) {
-            carry += other.data[other_idx]*other_sign;
-            this->data[len++] = abs(carry) % base;
-            negative = carry < 0;
-            carry /= base;
+        for (; (idx < len) && carry; idx++) {
+            carry += data[idx];
+            if (carry < 0) {
+                data[idx] = (carry + base) % base;
+                carry = -1;
+            } else {
+                data[idx] = carry % base;
+                carry = carry >= base;
+            }
         }
 
         if (carry) {
-            if (this->data.size() > len) {
-                this->data[len] = abs(carry);
+            if (data.size() > len) {
+                data[len] = abs(carry);
             } else {
-                this->data.push_back(abs(carry));
+                data.push_back(abs(carry));
             }
 
             len++;
-            negative = carry < 0;
         }
 
         normalize();
@@ -158,11 +215,8 @@ public:
         return *this;
     }
 
-    Long& operator-= (const Long& other) {
-        Long t = other;
-        t.negative = !t.negative;
-        *this += t;
-        return *this;
+    Long& operator -= (const Long& other) {
+        return *this += -other;
     }
 
     std::string to_string() const {
