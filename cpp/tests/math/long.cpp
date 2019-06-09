@@ -219,9 +219,52 @@ TEST(Long, MultiplyEqual) {
     EXPECT_EQ("333333333740740740037037037012345678432098765444444445", (L("999999999222222222999999999") *= L("333333333999999999555555555")).to_string());
 }
 
+TEST(Long, PreIncrement) {
+    EXPECT_EQ("0", (++L("-1")).to_string());
+    EXPECT_EQ("1", (++L("0")).to_string());
+    EXPECT_EQ("1000000000", (++L("999999999")).to_string());
+}
+
+TEST(Long, PostIncrement) {
+    Long t(-1);
+    EXPECT_EQ("-1", (t++).to_string());
+    EXPECT_EQ("0", t.to_string());
+
+    t = L("999999999");
+    EXPECT_EQ("999999999", (t++).to_string());
+    EXPECT_EQ("1000000000", t.to_string());
+}
+
+TEST(Long, PreDecrement) {
+    EXPECT_EQ("-1", (--L("0")).to_string());
+    EXPECT_EQ("0", (--L("1")).to_string());
+    EXPECT_EQ("999999999", (--L("1000000000")).to_string());
+}
+
+TEST(Long, PostDecrement) {
+    Long t(1);
+    EXPECT_EQ("1", (t--).to_string());
+    EXPECT_EQ("0", t.to_string());
+
+    t = L("1000000000");
+    EXPECT_EQ("1000000000", (t--).to_string());
+    EXPECT_EQ("999999999", t.to_string());
+}
+
 TEST(Long, ToString) {
     EXPECT_EQ("123", L("123").to_string());
     EXPECT_EQ("-1", L("-1").to_string());
     EXPECT_EQ("1", L("+1").to_string());
     EXPECT_EQ("3333333337407407400370370370123", L("3333333337407407400370370370123").to_string());
+}
+
+TEST(Long, IsZero) {
+    EXPECT_TRUE(L(0).is_zero());
+    EXPECT_TRUE(Long().is_zero());
+    EXPECT_TRUE(L("-0").is_zero());
+    EXPECT_TRUE(L("000000").is_zero());
+    EXPECT_TRUE(L("+000000").is_zero());
+    EXPECT_FALSE(L("-1").is_zero());
+    EXPECT_FALSE(L("+1").is_zero());
+    EXPECT_FALSE(L("3333333337407407400370370370123").is_zero());
 }

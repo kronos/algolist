@@ -8,6 +8,8 @@
 #include "common.hpp"
 #include <sstream>
 #include <iomanip>
+#include <vector>
+#include <algorithm>
 
 const ll base = 1000*1000*1000;
 
@@ -36,6 +38,7 @@ class Long {
 
         return carry;
     }
+
 public:
     Long(): Long(0) {
     }
@@ -47,7 +50,7 @@ public:
         negative = value < 0;
 
         do {
-            data.push_back(abs(value) % base);
+            data.push_back(std::abs(value) % base);
             value /= base;
         } while (value != 0);
 
@@ -202,9 +205,9 @@ public:
 
         if (carry) {
             if (data.size() > len) {
-                data[len] = abs(carry);
+                data[len] = std::abs(carry);
             } else {
-                data.push_back(abs(carry));
+                data.push_back(std::abs(carry));
             }
 
             len++;
@@ -233,7 +236,7 @@ public:
         for (size_t i = 0; i < len; i++) {
             carry = 0;
             for (size_t j = 0; j < other.len; j++) {
-                carry = (ll) original[i] * other.data[j] + carry + data[i+j];
+                carry = (ll)original[i] * other.data[j] + carry + data[i+j];
                 data[i+j] = carry % base;
                 carry = carry / base;
             }
@@ -249,6 +252,26 @@ public:
         return *this;
     }
 
+    Long& operator++() {
+        return *this += 1;
+    }
+
+    Long operator++(int) {
+        Long result(*this);
+        *this += 1;
+        return result;
+    }
+
+    Long& operator--() {
+        return *this -= 1;
+    }
+
+    Long operator--(int) {
+        Long result(*this);
+        *this -= 1;
+        return result;
+    }
+
     std::string to_string() const {
         std::stringstream ss;
         if (negative) {
@@ -262,24 +285,6 @@ public:
         }
 
         return ss.str();
-    }
-
-    ll to_long() const {
-        ll result = data[0];
-
-        if (len > 1) {
-            result += data[1]*base;
-
-            if (len > 2) {
-                result += data[2]*base*base;
-            }
-        }
-
-        return negative ? -result : result;
-    }
-
-    int to_int() const {
-        return (int)long();
     }
 
     bool is_zero() const {
