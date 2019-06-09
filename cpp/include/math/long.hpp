@@ -22,14 +22,28 @@ class Long {
         }
     }
 
+    inline int handle_carry(size_t idx) {
+        int carry;
+        if (data[idx] < 0) {
+            data[idx] += base;
+            carry = -1;
+        } else {
+            carry = data[idx] >= base;
+            if (carry) {
+                data[idx] %= base;
+            }
+        }
+
+        return carry;
+    }
 public:
     Long(): Long(0) {
     }
 
-    explicit Long(int value): Long(ll(value)) {
+    Long(int value): Long(ll(value)) {
     }
 
-    explicit Long(ll value) {
+    Long(ll value) {
         negative = value < 0;
 
         do {
@@ -43,30 +57,39 @@ public:
     explicit Long(const std::string& value) {
         if (value.empty()) {
             data.push_back(0);
+            len = 1;
         } else {
             negative = value[0] == '-';
             ll carry = 0;
             ll p = 1;
-            for (int i = value.length()-1; i >= negative; i--, p *= 10) {
+            int to = value[0] == '-' || value[0] == '+' ? 1 : 0;
+
+            // ignore trailing zeroes
+            while (to < value.length() - 1 && value[to] == '0') {
+                to++;
+            }
+
+            for (int i = value.length()-1; i >= to; i--, p *= 10) {
+                assert((value[i] - '0') >= 0 && (value[i] - '0') < 10);
                 carry += (value[i] - '0')*p;
                 if (p >= base) {
                     data.push_back(carry % base);
                     carry /= base;
-                    p /= base;
+                    p = 1;
                 }
             }
 
-            if (carry) {
+            if (carry || data.empty()) {
                 data.push_back(carry);
             }
+
+            len = data.size();
+            negative = value[0] == '-' && !is_zero();
         }
-        len = data.size();
     }
 
-    Long(const Long& value) {
-        data = value.data;
-        len = value.len;
-        negative = value.negative;
+    Long(const Long& value):
+        negative(value.negative), len(value.len), data(value.data.begin(), value.data.begin() + value.len) {
     }
 
     Long operator - () const {
@@ -87,26 +110,16 @@ public:
         return result;
     }
 
-//    Long operator * (const Long& other) const {
-//        Long result(this);
-//        result *= other;
-//        return result;
-//    }
-//
+    Long operator * (const Long& other) const {
+        Long result(*this);
+        result *= other;
+        return result;
+    }
+
 //    Long operator % (const Long& other) const {
 //        Long q = this/other;
 //        return q - other;
 //    }
-
-    bool operator == (const Long& other) const {
-        bool is_equal = len == other.len && negative == other.negative;
-
-        for (size_t i = 0; (i < len) && is_equal; i++) {
-            is_equal = data[i] == other.data[i];
-        }
-
-        return is_equal;
-    }
 
     bool operator < (const Long& other) const {
         if (negative != other.negative) {
@@ -159,15 +172,14 @@ public:
 
         if (negative != other.negative) {
             this_sign = negative ? -1 : 1;
-            other_sign = other.negative ? -1 : 1;
+            other_sign = -this_sign;
 
             negative = !negative;
-
             negative = *this > other;
 
             if (negative) {
                 this_sign = -this_sign;
-                other_sign = -other_sign;
+                other_sign = -this_sign;
             }
         }
 
@@ -179,25 +191,13 @@ public:
 
         int idx = 0;
         for (; idx < other.len; idx++) {
-            carry += this_sign*data[idx] + other_sign*other.data[idx];
-            if (carry < 0) {
-                data[idx] = (carry + base) % base;
-                carry = -1;
-            } else {
-                data[idx] = carry % base;
-                carry = carry >= base;
-            }
+            data[idx] = this_sign*data[idx] + other_sign*other.data[idx] + carry;
+            carry = handle_carry(idx);
         }
 
         for (; (idx < len) && carry; idx++) {
-            carry += data[idx];
-            if (carry < 0) {
-                data[idx] = (carry + base) % base;
-                carry = -1;
-            } else {
-                data[idx] = carry % base;
-                carry = carry >= base;
-            }
+            data[idx] += carry;
+            carry = handle_carry(idx);
         }
 
         if (carry) {
@@ -217,6 +217,36 @@ public:
 
     Long& operator -= (const Long& other) {
         return *this += -other;
+    }
+
+    Long& operator *= (const Long& other) {
+        std::vector<int> original(data.begin(), data.begin()+len);
+        std::fill(data.begin(), data.end(), 0);
+        negative = negative ^ other.negative;
+
+        size_t total_len = len + other.len;
+        if (data.size() < total_len) {
+            data.resize(total_len, 0);
+        }
+
+        ll carry;
+        for (size_t i = 0; i < len; i++) {
+            carry = 0;
+            for (size_t j = 0; j < other.len; j++) {
+                carry = (ll) original[i] * other.data[j] + carry + data[i+j];
+                data[i+j] = carry % base;
+                carry = carry / base;
+            }
+            data[i+other.len] = carry;
+        }
+
+        len = total_len;
+
+        normalize();
+
+        negative = negative && !is_zero();
+
+        return *this;
     }
 
     std::string to_string() const {
@@ -253,7 +283,7 @@ public:
     }
 
     bool is_zero() const {
-        return data[0] == 0 && len == 1;
+        return data[len-1] == 0;
     }
 };
-#endif //LONG_HPP
+#endif // LONG_HPP
