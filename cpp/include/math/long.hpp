@@ -6,8 +6,8 @@
 #define LONG_HPP
 
 #include "common.hpp"
+#include <iostream>
 #include <sstream>
-#include <iomanip>
 #include <vector>
 #include <algorithm>
 
@@ -95,6 +95,25 @@ public:
         negative(value.negative), len(value.len), data(value.data.begin(), value.data.begin() + value.len) {
     }
 
+    std::string to_string() const {
+        std::stringstream ss;
+        if (negative) {
+            ss << "-";
+        }
+
+        ss << data[len-1];
+
+        for (int i = len-2; i >= 0; i--) {
+            ss << std::setw(9) << std::setfill('0') << data[i];
+        }
+
+        return ss.str();
+    }
+
+    bool is_zero() const {
+        return data[len-1] == 0;
+    }
+
     Long operator - () const {
         Long result(*this);
         result.negative = !is_zero() && !result.negative;
@@ -166,6 +185,20 @@ public:
 
     bool operator >= (const Long& other) const {
         return !(*this < other);
+    }
+
+    bool operator == (const Long& other) const {
+        bool is_equal = negative == other.negative && len == other.len;
+
+        for (int i = 0; (i < len) && is_equal; i++) {
+            is_equal = data[i] == other.data[i];
+        }
+
+        return is_equal;
+    }
+
+    bool operator != (const Long& other) const {
+        return !(*this == other);
     }
 
     Long& operator += (const Long& other) {
@@ -272,23 +305,27 @@ public:
         return result;
     }
 
-    std::string to_string() const {
-        std::stringstream ss;
-        if (negative) {
-            ss << "-";
-        }
-
-        ss << data[len-1];
-
-        for (int i = len-2; i >= 0; i--) {
-            ss << std::setw(9) << std::setfill('0') << data[i];
-        }
-
-        return ss.str();
-    }
-
-    bool is_zero() const {
-        return data[len-1] == 0;
-    }
+    friend std::ostream& operator << (std::ostream& os, const Long &value);
 };
+
+std::ostream& operator << (std::ostream& os, const Long &value) {
+    if (value.negative) {
+        os << "-";
+    }
+
+    os << value.data[value.len-1];
+
+    for (int i = value.len-2; i >= 0; i--) {
+        os << std::setw(9) << std::setfill('0') << value.data[i];
+    }
+    return os;
+}
+
+std::istream& operator >> (std::istream& is, Long &value) {
+    std::string s;
+    is >> s;
+    value = Long(s);
+    return is;
+}
+
 #endif // LONG_HPP

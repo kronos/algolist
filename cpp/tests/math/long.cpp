@@ -42,6 +42,24 @@ TEST(Long, Constructors) {
     EXPECT_EQ("-421", L(L(-421)).to_string());
 }
 
+TEST(Long, ToString) {
+    EXPECT_EQ("123", L("123").to_string());
+    EXPECT_EQ("-1", L("-1").to_string());
+    EXPECT_EQ("1", L("+1").to_string());
+    EXPECT_EQ("3333333337407407400370370370123", L("3333333337407407400370370370123").to_string());
+}
+
+TEST(Long, IsZero) {
+    EXPECT_TRUE(L(0).is_zero());
+    EXPECT_TRUE(Long().is_zero());
+    EXPECT_TRUE(L("-0").is_zero());
+    EXPECT_TRUE(L("000000").is_zero());
+    EXPECT_TRUE(L("+000000").is_zero());
+    EXPECT_FALSE(L("-1").is_zero());
+    EXPECT_FALSE(L("+1").is_zero());
+    EXPECT_FALSE(L("3333333337407407400370370370123").is_zero());
+}
+
 TEST(Long, UnariMinus) {
     EXPECT_EQ("-123456", (-L("123456")).to_string());
     EXPECT_EQ("123456", (-L("-123456")).to_string());
@@ -143,6 +161,24 @@ TEST(Long, LessOrEqual) {
     EXPECT_TRUE(L("-99999999999999999999999999") <= L("-99999999999999999999999999"));
     EXPECT_TRUE(L("99999999999999999999999999")  <= L("99999999999999999999999999"));
     EXPECT_FALSE(L("-99999999999999999999999999") <= L("-100000000000000000000000000"));
+}
+
+TEST(Long, Equal) {
+    EXPECT_TRUE(L("+0") == L("-0"));
+    EXPECT_TRUE(L("100000000000000000000000000") == L("100000000000000000000000000"));
+    EXPECT_FALSE(L("-1") == L("1"));
+    EXPECT_FALSE(L("1") == L("-1"));
+    EXPECT_FALSE(L("2") == L("3"));
+    EXPECT_FALSE(L("-99999999999999999999999999") == L("-100000000000000000000000000"));
+}
+
+TEST(Long, NotEqual) {
+    EXPECT_FALSE(L("+0") != L("-0"));
+    EXPECT_FALSE(L("100000000000000000000000000") != L("100000000000000000000000000"));
+    EXPECT_TRUE(L("-1") != L("1"));
+    EXPECT_TRUE(L("1") != L("-1"));
+    EXPECT_TRUE(L("2") != L("3"));
+    EXPECT_TRUE(L("-99999999999999999999999999") != L("-100000000000000000000000000"));
 }
 
 TEST(Long, GreaterOrEqual) {
@@ -251,20 +287,17 @@ TEST(Long, PostDecrement) {
     EXPECT_EQ("999999999", t.to_string());
 }
 
-TEST(Long, ToString) {
-    EXPECT_EQ("123", L("123").to_string());
-    EXPECT_EQ("-1", L("-1").to_string());
-    EXPECT_EQ("1", L("+1").to_string());
-    EXPECT_EQ("3333333337407407400370370370123", L("3333333337407407400370370370123").to_string());
+TEST(Long, Output) {
+    std::stringstream ss;
+    Long t("-100000000000000000000000000");
+    ss << t;
+    EXPECT_EQ("-100000000000000000000000000", ss.str());
 }
 
-TEST(Long, IsZero) {
-    EXPECT_TRUE(L(0).is_zero());
-    EXPECT_TRUE(Long().is_zero());
-    EXPECT_TRUE(L("-0").is_zero());
-    EXPECT_TRUE(L("000000").is_zero());
-    EXPECT_TRUE(L("+000000").is_zero());
-    EXPECT_FALSE(L("-1").is_zero());
-    EXPECT_FALSE(L("+1").is_zero());
-    EXPECT_FALSE(L("3333333337407407400370370370123").is_zero());
+TEST(Long, Input) {
+    std::stringstream ss;
+    Long t;
+    ss << "-100000000000000000000000000";
+    ss >> t;
+    EXPECT_EQ(L("-100000000000000000000000000"), t);
 }
