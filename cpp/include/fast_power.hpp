@@ -16,9 +16,9 @@ T fast_power(T number, size_t power) {
 
     for (--power; power > 0; power >>= 1U) {
         if (power & 1U) {
-            result = result * number;
+            result *= number;
         }
-        number = number * number;
+        number *= number;
     }
 
     return result;

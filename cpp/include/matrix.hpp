@@ -15,16 +15,15 @@ class Matrix {
 
 public:
     Matrix(size_t n, size_t m): dim({n,m}) {
+        assert(n && m);
         data.resize(n, std::vector<T>(m, T()));
     }
 
     explicit Matrix(std::pair<size_t, size_t> p): Matrix(p.first, p.second) {}
     explicit Matrix(const std::vector<std::vector<T>>& new_data) {
+        assert(!(new_data.empty() && new_data[0].empty()));
         data = new_data;
-        dim = {data.size(), 0};
-        if (data.size()) {
-            dim.second = data[0].size();
-        }
+        dim = {data.size(), data[0].size()};
     }
 
     Matrix(const Matrix& other): dim(other.dim), data(other.data) {}
@@ -44,8 +43,8 @@ public:
         Matrix result(dim.first, other.dim.second);
         for (int i = 0; i < dim.first; ++i) {
             for (int j = 0; j < other.dim.second; ++j) {
-                result[i][j] = T();
-                for (int k = 0; k < dim.second; ++k) {
+                result[i][j] = data[i][0] * other.data[0][j];
+                for (int k = 1; k < dim.second; ++k) {
                     result[i][j] += data[i][k] * other.data[k][j];
                 }
             }
@@ -54,26 +53,9 @@ public:
         return result;
     }
 
-    Matrix& operator *=(const Matrix& other) const {
+    Matrix& operator *=(const Matrix& other) {
         assert(dim.first == other.dim.second && dim.second == other.dim.first);
-        Matrix result(*this);
-
-        for (int i = 0; i < dim.first; ++i) {
-            for (int j = 0; j < other.dim.second; ++j) {
-                data[i][j] = T();
-                for (int k = 0; k < dim.second; ++k) {
-                    data[i][j] += result.data[i][k] * other.data[k][j];
-                }
-            }
-        }
-
-        return this;
-    }
-
-    Matrix power(size_t power) const {
-        assert(power);
-        Matrix result(*this);
-        return fast_power(result, power);
+        return *this = *this * other;
     }
 };
 

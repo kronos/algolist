@@ -17,8 +17,7 @@ T fast_fibonacci(size_t N) {
     }
 
     Matrix<T> m({{one<T>(), one<T>()}, {one<T>(), zero<T>()}});
-
-    return m.power(N)[0][1];
+    return fast_power(m, N)[0][1];
 }
 
 #endif // FIBONACCI_HPP
