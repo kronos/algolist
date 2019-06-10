@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 
-const ll base = 1000*1000*1000;
+const ll base = 1000'000'000;
 
 class Long {
     std::vector<int> data;
@@ -106,55 +106,6 @@ public:
         return result;
     }
 
-    Long operator - (const Long& other) const {
-        if (negative != other.negative) {
-            Long result = len < other.len ?  add(other, *this) :  add(*this, other);
-            result.negative = negative && !result.is_zero();
-            return result;
-        }
-
-        int cmp = compare(*this, other, true);
-        Long result;
-
-        if (cmp == -1) {
-            result = sub(other, *this);
-            result.negative = !other.negative;
-        } else if (cmp == 1) {
-            result = sub(*this, other);
-            result.negative = negative;
-        }
-
-        return result;
-    }
-
-    Long operator + (const Long& other) const {
-        Long result;
-
-        if (negative != other.negative) {
-            int cmp = compare(*this, other, true);
-            if (cmp == -1) {
-                result = sub(other, *this);
-            } else if (cmp == 1) {
-                result = sub(*this, other);
-            }
-        } else {
-            result = len < other.len ?  add(other, *this) :  add(*this, other);
-            result.negative = negative;
-        }
-
-        return result;
-    }
-
-    Long operator * (const Long& other) const {
-        Long result;
-        if (!(is_zero() || other.is_zero())) {
-            result = mul(*this, other);
-            result.negative = negative ^ other.negative;
-        }
-
-        return result;
-    }
-
 //    Long operator % (const Long& other) const {
 //        Long q = this/other;
 //        return q - other;
@@ -185,19 +136,36 @@ public:
     }
 
     Long& operator += (const Long& other) {
-        return *this = *this + other;
+        if (negative != other.negative) {
+            sub(*this, other, other.negative);
+        } else {
+            add(*this, other);
+        }
+        return *this;
     }
 
     Long& operator -= (const Long& other) {
-        if (this == &other) {
-            return *this = Long();
+        if (negative == other.negative) {
+            sub(*this, other, !other.negative);
+        } else {
+            add(*this, other);
         }
 
-        return *this = Long(*this) - other;
+        return *this;
     }
 
     Long& operator *= (const Long& other) {
-        return *this = *this * other;
+        if (other.is_zero()) {
+            *this = Long();
+        } else if (!is_zero()) {
+            if (this == &other) {
+                mul(*this, Long(other));
+            } else {
+                mul(*this, other);
+            }
+        }
+
+        return *this;
     }
 
     Long& operator++() {
@@ -222,10 +190,25 @@ public:
 
     friend std::ostream& operator << (std::ostream& os, const Long &value);
     friend int compare(const Long &left, const Long &right, bool modulo);
-    friend Long add(const Long &left, const Long &right);
-    friend Long sub(const Long &left, const Long &right);
-    friend Long mul(const Long &left, const Long &right);
+    friend void mul(Long &left, const Long &right);
+    friend void add(Long &result, const Long &right);
+    friend void sub(Long &result, const Long &right, bool right_negative);
+    friend Long operator+(Long left, const Long& right);
+    friend Long operator-(Long left, const Long& right);
+    friend Long operator*(Long left, const Long& right);
 };
+
+Long operator+(Long left, const Long& right) {
+    return left += right;
+}
+
+Long operator-(Long left, const Long& right) {
+    return left -= right;
+}
+
+Long operator*(Long left, const Long& right) {
+    return left *= right;
+}
 
 std::ostream& operator << (std::ostream& os, const Long &value) {
     if (value.negative) {
@@ -268,16 +251,39 @@ int compare(const Long &left, const Long &right, bool modulo) {
     return 0;
 }
 
-// left.len >= right.len
-Long add(const Long &left, const Long &right) {
-    Long result(left);
+void mul(Long &left, const Long &other) {
+    std::vector<int> original(left.data.begin(), left.data.begin() + left.len);
+
+    left.len += other.len;
+    left.data = std::vector<int>(left.len, 0);
+    left.negative = left.negative ^ other.negative;
 
     ll carry = 0;
+    for (size_t i = 0; i < original.size(); i++) {
+        carry = 0;
+        for (size_t j = 0; j < other.len; j++) {
+            carry = (ll)original[i] * other.data[j] + carry + left.data[i+j];
+            left.data[i+j] = carry % base;
+            carry = carry / base;
+        }
+        left.data[i+other.len] = carry;
+    }
+
+    left.normalize();
+}
+
+void add(Long &result, const Long &right) {
+    ll carry = 0;
+    result.len = std::max(result.len, right.len);
+    if (result.data.size() < result.len){
+        result.data.resize(result.len, 0);
+    }
+
     for (size_t idx = 0; idx < right.len; idx++) {
         result.data[idx] += right.data[idx] + carry;
         carry = result.data[idx] >= base;
         if (carry) {
-            result.data[idx] %= base;
+            result.data[idx] -= base;
         }
     }
 
@@ -289,19 +295,24 @@ Long add(const Long &left, const Long &right) {
             result.data[right.len] += carry;
         }
     }
-
-    return result;
 }
 
-// left >= right
-Long sub(const Long &left, const Long &right) {
-    Long result(left);
-
+void sub(Long &result, const Long &right, bool right_negative) {
     ll carry = 0;
-    int idx = 0;
+    ll sign = 1;
+    if (compare(result, right, true) < 1) {
+        sign = result.negative && right_negative ? 1 : -1;
+        result.negative = right_negative;
+    }
 
+    result.len = std::max(result.len, right.len);
+    if (result.data.size() < result.len){
+        result.data.resize(result.len, 0);
+    }
+
+    int idx = 0;
     for (; idx < right.len; idx++) {
-        result.data[idx] = result.data[idx] - right.data[idx] + carry;
+        result.data[idx] = (result.data[idx] - right.data[idx])*sign + carry;
         if (result.data[idx] < 0) {
             result.data[idx] += base;
             carry = -1;
@@ -331,29 +342,7 @@ Long sub(const Long &left, const Long &right) {
     }
 
     result.normalize();
-
-    return result;
+    result.negative = result.negative && !result.is_zero();
 }
 
-Long mul(const Long &left, const Long &right) {
-    Long result;
-
-    result.len = left.len + right.len;
-    result.data.resize(result.len, 0);
-
-    ll carry;
-    for (size_t i = 0; i < left.len; i++) {
-        carry = 0;
-        for (size_t j = 0; j < right.len; j++) {
-            carry = (ll)left.data[i] * right.data[j] + carry + result.data[i+j];
-            result.data[i+j] = carry % base;
-            carry = carry / base;
-        }
-        result.data[i+right.len] = carry;
-    }
-
-    result.normalize();
-
-    return result;
-}
 #endif // LONG_HPP
